@@ -4,26 +4,20 @@ import telemetry.TelemetryService;
 
 public class CanaryEvaluationTool {
 
-    private TelemetryService telemetry =
-            new TelemetryService();
+    private TelemetryService telemetry;
+
+    public CanaryEvaluationTool(TelemetryService telemetry) {
+        this.telemetry = telemetry;
+    }
 
     public boolean evaluate() {
 
-        double successRate =
-                telemetry.getSuccessRate();
+        double successRate = telemetry.getSuccessRate();
+        int crashes = telemetry.getCrashCount();
 
-        int crashes =
-                telemetry.getCrashCount();
+        System.out.println("Success rate: " + successRate);
+        System.out.println("Crash count: " + crashes);
 
-        System.out.println(
-                "Success rate: "
-                        + successRate);
-
-        System.out.println(
-                "Crash count: "
-                        + crashes);
-
-        return successRate >= 95
-                && crashes < 10;
+        return successRate >= 95 && crashes < 10;
     }
 }

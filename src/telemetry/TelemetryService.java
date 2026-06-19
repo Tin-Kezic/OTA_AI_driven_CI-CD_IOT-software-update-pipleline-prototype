@@ -2,13 +2,19 @@ package telemetry;
 
 public class TelemetryService {
 
+    private final double successRate;
+    private final int crashCount;
+
+    public TelemetryService(double successRate, int crashCount) {
+        this.successRate = successRate;
+        this.crashCount = crashCount;
+    }
+
     public double getSuccessRate() {
-        // simulacija
-        return 98.5;
+        return successRate;
     }
 
     public int getCrashCount() {
-
-        return 2;
+        return crashCount;
     }
 }
