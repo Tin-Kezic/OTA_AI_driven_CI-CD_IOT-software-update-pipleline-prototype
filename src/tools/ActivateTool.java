@@ -9,14 +9,17 @@ public class ActivateTool {
                             UpdatePackage updatePackage) {
 
         System.out.println(
-                "Activating version "
-                        + updatePackage.getVersion()
+                "Activating version " + updatePackage.getVersion()
+                        + " on " + device.getId()
         );
 
-        device.setCurrentVersion(
-                updatePackage.getVersion()
-        );
+        // simulacija greške (npr. uređaj 102 faila)
+        if (device.getId().contains("102")) {
+            System.out.println("Activation FAILED on " + device.getId());
+            return false;
+        }
 
+        device.setCurrentVersion(updatePackage.getVersion());
         return true;
     }
 }
