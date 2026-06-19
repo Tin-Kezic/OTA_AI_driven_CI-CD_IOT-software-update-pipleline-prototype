@@ -3,13 +3,14 @@ package agent;
 import model.Device;
 import model.OtaState;
 import model.UpdatePackage;
-import tools.ActivateTool;
-import tools.DeployTool;
-import tools.ValidateTool;
+import tools.*;
+
+import java.util.List;
 
 public class OtaAgent {
 
-    private OtaState state = OtaState.PREPARED;
+    private OtaState state =
+            OtaState.PREPARED;
 
     private ValidateTool validateTool =
             new ValidateTool();
@@ -20,49 +21,65 @@ public class OtaAgent {
     private ActivateTool activateTool =
             new ActivateTool();
 
-    public void execute(Device device,
-                        UpdatePackage updatePackage) {
+    private CanaryEvaluationTool canaryTool =
+            new CanaryEvaluationTool();
 
-        System.out.println("Current state: " + state);
+    private RolloutDecisionTool rolloutTool =
+            new RolloutDecisionTool();
 
-        boolean validated =
-                validateTool.validateUpdate(
-                        device,
-                        updatePackage);
-
-        if (!validated) {
-            state = OtaState.FAILED;
-            System.out.println("Validation failed");
-            return;
-        }
+    public void executeCanary(
+            List<Device> canaryDevices,
+            List<Device> productionDevices,
+            UpdatePackage updatePackage) {
 
         state = OtaState.VALIDATED;
-        System.out.println("State -> VALIDATED");
 
-        boolean deployed =
-                deployTool.deploy(
-                        device,
-                        updatePackage);
+        for (Device device : canaryDevices) {
 
-        if (!deployed) {
+            deployTool.deploy(
+                    device,
+                    updatePackage);
+
+            activateTool.activate(
+                    device,
+                    updatePackage);
+        }
+
+        state = OtaState.CANARY_DEPLOYED;
+
+        boolean canaryPassed =
+                canaryTool.evaluate();
+
+        state = OtaState.CANARY_EVALUATION;
+
+        if (!rolloutTool.continueRollout(
+                canaryPassed)) {
+
             state = OtaState.FAILED;
+
+            System.out.println(
+                    "Canary rollout failed");
+
             return;
         }
 
-        state = OtaState.DEPLOYED;
-        System.out.println("State -> DEPLOYED");
+        state = OtaState.FULL_ROLLOUT;
 
-        boolean activated =
-                activateTool.activate(
-                        device,
-                        updatePackage);
+        for (Device device :
+                productionDevices) {
 
-        if (!activated) {
-            state = OtaState.FAILED;
-            return;
+            deployTool.deploy(
+                    device,
+                    updatePackage);
+
+            activateTool.activate(
+                    device,
+                    updatePackage);
         }
 
         state = OtaState.ACTIVATED;
-        System.out.println("State -> ACTIVATED");
+
+        System.out.println(
+                "Rollout completed");
     }
 }
